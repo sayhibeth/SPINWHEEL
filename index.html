@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Therapy Carnival Wheel</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --text:#ffffff;
+      --good:#34d399;
+      --bad:#fb7185;
+      --next:#60a5fa;
+    }
+
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      color:var(--text);
+      overflow:hidden;
+
+      /* Centered, non-stretched background */
+      background-color:#0d1025;
+      background-image:
+        linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.55)),
+        url("https://static.wixstatic.com/media/b668a8_a353698b68e443e78141049af484c661~mv2.png");
+      background-repeat:no-repeat;
+      background-position:center center;
+      background-size: contain;
+    }
+
+    .container{
+      height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+      box-sizing:border-box;
+    }
+
+    .layout{
+      width:min(1200px, 98vw);
+      height:calc(100vh - 20px);
+      display:grid;
+      grid-template-columns: minmax(250px, 340px) 1fr;
+      gap:12px;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .panel{
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:18px;
+      padding:12px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.22);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      height:100%;
+      box-sizing:border-box;
+      backdrop-filter: blur(6px);
+    }
+
+    .panelInner{ width:100%; max-width:300px; margin:0 auto; }
+
+    .wheelWrap{
+      height:100%;
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;  /* bottom */
+      padding-bottom:12px;   /* small lift from edge */
+      min-width:0;
+    }
+
+    canvas#wheel{
+      display:block;
+      cursor:pointer;
+      height:min(58vh, 520px);
+      width:auto;
+      max-width:calc(98vw - 360px);
+      max-height:58vh;
+    }
+
+    canvas#confetti{
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      pointer-events:none;
+      z-index:1000;
+    }
+
+    button{
+      padding:10px 14px;
+      font-weight:900;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+      letter-spacing:.2px;
+    }
+    button:disabled{opacity:.55; cursor:not-allowed}
+    .reset{background:#6b7280; color:white;}
+
+    .toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 10px;
+      border-radius:12px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      color:rgba(255,255,255,.92);
+      font-weight:900;
+      font-size:14px;
+      user-select:none;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+    }
+    .toggle input{transform:scale(1.15)}
+
+    .turnBar{
+      border-radius:18px;
+      padding:10px 10px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.10);
+      box-shadow: 0 16px 50px rgba(0,0,0,.20);
+      text-align:center;
+    }
+    .turnPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:9px 12px;
+      border-radius:999px;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+      font-weight:1000;
+      letter-spacing:.3px;
+      font-size:18px;
+      line-height:1;
+      border:1px solid rgba(255,255,255,.30);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      white-space:nowrap;
+    }
+    .turnPill.therapist{
+      background: linear-gradient(180deg, rgba(0,187,249,.95), rgba(155,93,229,.90));
+      color:#ffffff;
+    }
+    .turnPill.client{
+      background: linear-gradient(180deg, rgba(82,242,184,.95), rgba(255,230,109,.90));
+      color:#102016;
+    }
+    .turnHint{
+      margin-top:7px;
+      font-size:12px;
+      color:rgba(255,255,255,.88);
+      font-weight:900;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+    }
+
+    .scoreboard{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:10px;
+      width:100%;
+    }
+    .scoreCard{
+      border-radius:18px;
+      padding:10px 10px 10px;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: 0 14px 40px rgba(0,0,0,.18);
+      text-align:center;
+    }
+    .scoreName{
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+      font-weight:1000;
+      letter-spacing:.3px;
+      font-size:15px;
+      color:rgba(255,255,255,.95);
+    }
+    .scorePts{
+      margin-top:6px;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+      font-weight:1000;
+      font-size:36px;
+      line-height:1;
+      color:#fff;
+      text-shadow: 0 10px 24px rgba(0,0,0,.35);
+    }
+    .scoreCard.active{
+      outline:3px solid rgba(255,255,255,.42);
+      transform: translateY(-1px);
+    }
+
+    .controls{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:rgba(255,255,255,.78);
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+      font-weight:700;
+      text-align:center;
+    }
+
+    /* Popup (no close button) */
+    .popup{
+      position:fixed;
+      inset:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:rgba(0,0,0,.60);
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 850ms ease;
+      z-index:999;
+      padding:18px;
+    }
+    .popup.show{opacity:1; pointer-events:auto;}
+    .popupBox{
+      background:rgba(255,216,77,.90);
+      color:#111;
+      padding:16px 14px 14px;
+      border-radius:22px;
+      width:min(640px,92vw);
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+      transform: translateY(12px) scale(.98);
+      transition: transform 850ms ease;
+      border:1px solid rgba(255,255,255,.35);
+      text-align:center;
+    }
+    .popup.show .popupBox{transform: translateY(0) scale(1);}
+
+    .popupTurn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:9px 12px;
+      border-radius:999px;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+      font-weight:1000;
+      font-size:18px;
+      letter-spacing:.3px;
+      border:1px solid rgba(255,255,255,.35);
+      box-shadow: 0 12px 28px rgba(0,0,0,.25);
+      white-space:nowrap;
+      margin-bottom:10px;
+    }
+    .popupTurn.therapist{
+      background: linear-gradient(180deg, rgba(0,187,249,.95), rgba(155,93,229,.90));
+      color:#fff;
+    }
+    .popupTurn.client{
+      background: linear-gradient(180deg, rgba(82,242,184,.95), rgba(255,230,109,.90));
+      color:#0f1f17;
+    }
+
+    .popupText{
+      font-size:32px;
+      font-weight:1000;
+      line-height:1.1;
+      padding:12px 10px 14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.42);
+      border:1px solid rgba(0,0,0,.10);
+      word-break:break-word;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+    }
+
+    .popupActions{
+      margin-top:12px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .good{ background:var(--good); color:#062316; }
+    .bad{  background:var(--bad);  color:#2a0811; }
+    .next{ background:var(--next); color:#06162a; }
+
+    /* Winner */
+    .winner{
+      position:fixed;
+      inset:0;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:rgba(0,0,0,.65);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 850ms ease;
+      z-index:1100;
+      padding:18px;
+    }
+    .winner.show{opacity:1; pointer-events:auto;}
+    .winnerCard{
+      width:min(680px,92vw);
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(255,216,77,.92), rgba(255,183,3,.90));
+      border:1px solid rgba(255,255,255,.35);
+      box-shadow: 0 25px 90px rgba(0,0,0,.60);
+      padding:18px 18px 16px;
+      color:#111;
+      transform: translateY(14px) scale(.98);
+      transition: transform 850ms ease;
+      text-align:center;
+    }
+    .winner.show .winnerCard{transform: translateY(0) scale(1);}
+    .winnerH{
+      font-size:14px;
+      font-weight:1000;
+      opacity:.85;
+      margin-bottom:10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+    }
+    .winnerTitle{
+      font-size:36px;
+      font-weight:1000;
+      line-height:1.05;
+      padding:14px 12px;
+      border-radius:18px;
+      background:rgba(255,255,255,.42);
+      border:1px solid rgba(0,0,0,.10);
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+    }
+    .winnerSub{
+      margin-top:10px;
+      font-size:14px;
+      font-weight:900;
+      opacity:.85;
+      font-family: "Fredoka", system-ui, Arial, sans-serif;
+    }
+
+    @media (max-width: 860px){
+      body{ overflow:auto; }
+      .container{ height:auto; }
+      .layout{ height:auto; grid-template-columns:1fr; }
+      .wheelWrap{ align-items:center; padding-bottom:0; }
+      canvas#wheel{
+        width:min(860px, 96vw);
+        height:auto;
+        max-width:96vw;
+        max-height:none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="confetti"></canvas>
+
+  <div class="container">
+    <div class="layout">
+      <div class="panel">
+        <div class="panelInner">
+          <div class="turnBar" aria-live="polite">
+            <div id="turnPill" class="turnPill therapist">THERAPIST’S TURN</div>
+            <div class="turnHint" id="turnHint">Click the center SPIN</div>
+          </div>
+
+          <div class="scoreboard" aria-label="Scoreboard">
+            <div id="scoreTherapistCard" class="scoreCard active">
+              <div class="scoreName">Therapist</div>
+              <div class="scorePts" id="scoreTherapist">0</div>
+            </div>
+            <div id="scoreClientCard" class="scoreCard">
+              <div class="scoreName">Client</div>
+              <div class="scorePts" id="scoreClient">0</div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button id="resetBtn" class="reset">Reset</button>
+            <label class="toggle" title="Turn tick sound on or off">
+              <input id="soundToggle" type="checkbox" checked />
+              Sound
+            </label>
+          </div>
+
+          <div class="hint">Each player can only land on each slice once.</div>
+        </div>
+      </div>
+
+      <div class="wheelWrap">
+        <canvas id="wheel" width="1000" height="1040" aria-label="Spin wheel"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="popupBox">
+      <div id="popupTurn" class="popupTurn therapist">THERAPIST’S TURN</div>
+      <div class="popupText" id="popupText">—</div>
+      <div class="popupActions">
+        <button class="good" id="popupGoodBtn">Earn Point ✅</button>
+        <button class="bad" id="popupBadBtn">No Point ❌</button>
+        <button class="next" id="nextTurnBtn" disabled>NEXT PLAYER TURN ➜</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="winner" id="winner">
+    <div class="winnerCard">
+      <div class="winnerH">
+        <div>🎉 Game Over</div>
+        <button class="reset" id="playAgainBtn">Play Again</button>
+      </div>
+      <div class="winnerTitle" id="winnerTitle">—</div>
+      <div class="winnerSub" id="winnerSub">—</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const prompts = [
+    "Say something nice about yourself",
+    "Tell a lie",
+    "Make a wish for something fun",
+    "Say something that annoys you",
+    "What’s an annoying habit you have",
+    "What’s your favorite sweet treat",
+    "What’s a show you can’t stop watching or song you keep listening to",
+    "What’s the last thing you got into trouble for",
+    "Name one food you could eat every day for a month",
+    "What was your last tantrum/crash out over?",
+    "If you were an animal, what animal would you be?",
+    "What was the last nice thing you did for someone?"
+  ];
+
+  const n = 12;
+
+  const wheel = document.getElementById("wheel");
+  const ctx = wheel.getContext("2d");
+
+  const confettiCanvas = document.getElementById("confetti");
+  const cctx = confettiCanvas.getContext("2d");
+
+  const resetBtn = document.getElementById("resetBtn");
+  const soundToggle = document.getElementById("soundToggle");
+
+  const turnPill = document.getElementById("turnPill");
+  const turnHint = document.getElementById("turnHint");
+
+  const scoreTherapistEl = document.getElementById("scoreTherapist");
+  const scoreClientEl = document.getElementById("scoreClient");
+  const scoreTherapistCard = document.getElementById("scoreTherapistCard");
+  const scoreClientCard = document.getElementById("scoreClientCard");
+
+  const popup = document.getElementById("popup");
+  const popupText = document.getElementById("popupText");
+  const popupTurn = document.getElementById("popupTurn");
+  const popupGoodBtn = document.getElementById("popupGoodBtn");
+  const popupBadBtn  = document.getElementById("popupBadBtn");
+  const nextTurnBtn  = document.getElementById("nextTurnBtn");
+
+  const winner = document.getElementById("winner");
+  const winnerTitle = document.getElementById("winnerTitle");
+  const winnerSub = document.getElementById("winnerSub");
+  const playAgainBtn = document.getElementById("playAgainBtn");
+
+  let scores = [0,0];
+  let used = [new Set(), new Set()];
+  let turn = 0;
+  let angle = 0;
+  let spinning = false;
+  let lastLandedSlice = null;
+  let scoredThisPrompt = false;
+
+  // tick sound
+  let soundEnabled = true;
+  let audioCtx = null;
+
+  soundToggle.addEventListener("change", () => {
+    soundEnabled = !!soundToggle.checked;
+    if(!soundEnabled && audioCtx && audioCtx.state === "running"){
+      audioCtx.suspend().catch(()=>{});
+    } else if(soundEnabled && audioCtx && audioCtx.state === "suspended"){
+      audioCtx.resume().catch(()=>{});
+    }
+  });
+
+  function ensureAudio(){
+    if(!soundEnabled) return false;
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
+    return true;
+  }
+
+  function playTick(){
+    if(!ensureAudio()) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "square";
+    o.frequency.setValueAtTime(240, audioCtx.currentTime);
+    g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.14, audioCtx.currentTime + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.11);
+    o.connect(g).connect(audioCtx.destination);
+    o.start();
+    o.stop(audioCtx.currentTime + 0.12);
+  }
+
+  const colors = [
+    "#ff4040","#ff2a8a","#8e4aa3",
+    "#32a9d6","#42d75e","#f2e63c",
+    "#ff6f00","#00c2a8","#ff8c42",
+    "#9b5de5","#00bbf9","#fee440"
+  ];
+  const bulbColors = ["#ffe66d","#ff4d6d","#52f2b8","#00bbf9","#9b5de5","#ff8c42"];
+  const textColor = "#2f2f2f";
+
+  function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+  function randInt(min,max){ return Math.floor(rand(min,max+1)); }
+
+  // Confetti
+  let confetti = [];
+  let confettiAnimating = false;
+
+  function resizeConfetti(){
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resizeConfetti);
+  resizeConfetti();
+
+  function burstConfetti(x, y, count=200){
+    for(let i=0;i<count;i++){
+      confetti.push({
+        x, y,
+        vx: rand(-7, 7),
+        vy: rand(-12, -4),
+        g: rand(0.18, 0.32),
+        size: rand(6, 12),
+        rot: rand(0, Math.PI*2),
+        vr: rand(-0.25, 0.25),
+        color: colors[randInt(0, colors.length-1)],
+        life: randInt(90, 150)
+      });
+    }
+    if(!confettiAnimating) animateConfetti();
+  }
+
+  function animateConfetti(){
+    confettiAnimating = true;
+    cctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+
+    confetti = confetti.filter(p => p.life > 0);
+    for(const p of confetti){
+      p.life--;
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+
+      cctx.save();
+      cctx.translate(p.x, p.y);
+      cctx.rotate(p.rot);
+      cctx.fillStyle = p.color;
+      cctx.globalAlpha = Math.min(1, p.life / 55);
+      cctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.7);
+      cctx.restore();
+    }
+    cctx.globalAlpha = 1;
+
+    if(confetti.length){
+      requestAnimationFrame(animateConfetti);
+    } else {
+      confettiAnimating = false;
+      cctx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+    }
+  }
+
+  function wheelR(){ return wheel.width * 0.40; }
+  function hubR(){ return wheelR() * 0.15; }
+  function center(){ return {cx: wheel.width/2, cy: wheel.height*0.44}; }
+
+  function segmentAtPointer(a){
+    const seg = Math.PI*2/n;
+    const pointer = -Math.PI/2;
+    let rel = (pointer - a) % (Math.PI*2);
+    if(rel < 0) rel += Math.PI*2;
+    return Math.floor(rel / seg);
+  }
+
+  function fitTextLines(text, maxWidth, fontFamily){
+    const words = (text || "").trim().split(/\s+/).filter(Boolean);
+    if(!words.length) return {fontSize: 16, lines:[""]};
+
+    const maxLines = 3;
+    let fontSize = 24;
+
+    while(fontSize >= 12){
+      ctx.font = `900 ${fontSize}px ${fontFamily}`;
+      const lines = [];
+      let current = "";
+
+      for(const w of words){
+        const test = current ? (current + " " + w) : w;
+        if(ctx.measureText(test).width <= maxWidth){
+          current = test;
+        } else {
+          if(current) lines.push(current);
+          current = w;
+          if(lines.length >= maxLines) break;
+        }
+      }
+      if(current) lines.push(current);
+
+      const usedCount = lines.join(" ").split(/\s+/).filter(Boolean).length;
+      if(usedCount >= words.length) return {fontSize, lines};
+      fontSize -= 1;
+    }
+    return {fontSize: 12, lines:[text]};
+  }
+
+  function drawWheel(){
+    const {cx, cy} = center();
+    const R = wheelR();
+    const seg = Math.PI*2/n;
+
+    ctx.clearRect(0,0,wheel.width,wheel.height);
+
+    // 3D shadow
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*1.27, 0, Math.PI*2);
+    ctx.fillStyle="rgba(0,0,0,.24)";
+    ctx.fill();
+
+    // rim
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*1.23, 0, Math.PI*2);
+    const rimGrad = ctx.createRadialGradient(cx, cy, R*0.75, cx, cy, R*1.25);
+    rimGrad.addColorStop(0, "#ffd166");
+    rimGrad.addColorStop(0.65, "#f6b441");
+    rimGrad.addColorStop(1, "#d97706");
+    ctx.fillStyle = rimGrad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*1.12, 0, Math.PI*2);
+    const innerRimGrad = ctx.createRadialGradient(cx, cy, R*0.5, cx, cy, R*1.12);
+    innerRimGrad.addColorStop(0, "#ffa94d");
+    innerRimGrad.addColorStop(1, "#f48c06");
+    ctx.fillStyle = innerRimGrad;
+    ctx.fill();
+
+    // bulbs
+    const bulbCount = 24;
+    const t = performance.now()/520;
+    for(let i=0;i<bulbCount;i++){
+      const a = i*(Math.PI*2/bulbCount);
+      const bx = cx + Math.cos(a) * (R*1.17);
+      const by = cy + Math.sin(a) * (R*1.17);
+      const glow = 0.35 + 0.25*Math.sin(t + i);
+
+      ctx.beginPath();
+      ctx.arc(bx, by, 13.5, 0, Math.PI*2);
+      const col = bulbColors[i % bulbColors.length];
+      ctx.fillStyle = col;
+      ctx.globalAlpha = 0.55 + glow*0.35;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.beginPath();
+      ctx.arc(bx-4, by-4, 5, 0, Math.PI*2);
+      ctx.fillStyle="rgba(255,255,255,.75)";
+      ctx.fill();
+    }
+
+    // segments + text
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+
+    for(let i=0;i<n;i++){
+      const a0=i*seg;
+      const a1=a0+seg;
+
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.arc(0,0,R,a0,a1);
+      ctx.closePath();
+      ctx.fillStyle=colors[i];
+      ctx.fill();
+
+      // gloss
+      ctx.save();
+      ctx.clip();
+      const gloss = ctx.createLinearGradient(-R, -R, R, R);
+      gloss.addColorStop(0, "rgba(255,255,255,.18)");
+      gloss.addColorStop(0.5, "rgba(255,255,255,0)");
+      gloss.addColorStop(1, "rgba(0,0,0,.10)");
+      ctx.fillStyle = gloss;
+      ctx.fillRect(-R, -R, R*2, R*2);
+      ctx.restore();
+
+      if(used[turn].has(i)){
+        ctx.save();
+        ctx.clip();
+        ctx.fillStyle="rgba(0,0,0,.16)";
+        ctx.fillRect(-R, -R, R*2, R*2);
+        ctx.restore();
+      }
+
+      ctx.save();
+      const mid=(a0+a1)/2;
+      ctx.rotate(mid);
+      ctx.translate(R*0.18, 0);
+
+      const maxW = R*0.74;
+      const fontFamily = `"Fredoka", Arial, Helvetica, sans-serif`;
+      const fit = fitTextLines(prompts[i] || "", maxW, fontFamily);
+
+      ctx.font = `900 ${fit.fontSize}px ${fontFamily}`;
+      ctx.textAlign="left";
+      ctx.textBaseline="middle";
+      ctx.fillStyle = textColor;
+
+      const lineGap = fit.fontSize * 0.92; /* tight */
+      const offset = (fit.lines.length-1) * lineGap * 0.5;
+
+      for(let li=0; li<fit.lines.length; li++){
+        const y = (li*lineGap) - offset;
+        ctx.fillText(fit.lines[li], 0, y);
+      }
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // hub
+    const HR = hubR();
+    ctx.beginPath();
+    ctx.arc(cx, cy, HR*1.15, 0, Math.PI*2);
+    ctx.fillStyle="#ffe680";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, HR, 0, Math.PI*2);
+    const hubGrad = ctx.createRadialGradient(cx-10, cy-10, 5, cx, cy, HR);
+    hubGrad.addColorStop(0, "#fff2a8");
+    hubGrad.addColorStop(1, "#f6b441");
+    ctx.fillStyle=hubGrad;
+    ctx.fill();
+
+    ctx.lineWidth=10;
+    ctx.strokeStyle="#ffd84d";
+    ctx.stroke();
+
+    ctx.fillStyle="#ffffff";
+    ctx.font="900 28px 'Fredoka', Arial, sans-serif";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText("SPIN", cx, cy);
+
+    // pointer
+    const pY = cy - R*1.22 - 6;
+    ctx.beginPath();
+    ctx.moveTo(cx, pY);
+    ctx.lineTo(cx-20, pY+36);
+    ctx.lineTo(cx+20, pY+36);
+    ctx.closePath();
+    ctx.fillStyle="#ffd84d";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(cx, pY+6, 10, 0, Math.PI*2);
+    ctx.fillStyle="rgba(255,255,255,.85)";
+    ctx.fill();
+
+    // base
+    ctx.beginPath();
+    ctx.roundRect(cx - R*0.16, cy + R*1.03, R*0.32, R*0.18, 24);
+    ctx.fillStyle="#f48c06";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.roundRect(cx - R*0.38, cy + R*1.17, R*0.76, R*0.22, 34);
+    ctx.fillStyle="#f6b441";
+    ctx.fill();
+  }
+
+  function setTurnUI(){
+    const isTherapist = (turn === 0);
+
+    turnPill.classList.toggle("therapist", isTherapist);
+    turnPill.classList.toggle("client", !isTherapist);
+    turnPill.textContent = (isTherapist ? "THERAPIST’S TURN" : "CLIENT’S TURN");
+
+    popupTurn.classList.toggle("therapist", isTherapist);
+    popupTurn.classList.toggle("client", !isTherapist);
+    popupTurn.textContent = (isTherapist ? "THERAPIST’S TURN" : "CLIENT’S TURN");
+
+    scoreTherapistCard.classList.toggle("active", isTherapist);
+    scoreClientCard.classList.toggle("active", !isTherapist);
+
+    turnHint.textContent = "Click the center SPIN";
+  }
+
+  function updateScoreUI(){
+    scoreTherapistEl.textContent = String(scores[0]);
+    scoreClientEl.textContent = String(scores[1]);
+  }
+
+  function showPopup(text){
+    popupText.textContent = text;
+    popup.classList.add("show");
+  }
+  function hidePopup(){ popup.classList.remove("show"); }
+
+  function showWinner(){
+    const a = scores[0], b = scores[1];
+    let title;
+    if(a > b) title = "Therapist wins! 🏆";
+    else if(b > a) title = "Client wins! 🏆";
+    else title = "It’s a tie! 🏆";
+
+    winnerTitle.textContent = title;
+    winnerSub.textContent = `Final score — Therapist: ${a} | Client: ${b}`;
+    winner.classList.add("show");
+
+    burstConfetti(window.innerWidth/2, window.innerHeight*0.25, 280);
+    burstConfetti(window.innerWidth/2, window.innerHeight*0.25, 280);
+  }
+
+  function pickUnusedForPlayer(playerIndex){
+    const available=[];
+    for(let i=0;i<n;i++){
+      if(!used[playerIndex].has(i)) available.push(i);
+    }
+    return available.length ? available[Math.floor(Math.random()*available.length)] : null;
+  }
+
+  function animateSpin(targetIndex){
+    const seg = Math.PI*2/n;
+    const pointer = -Math.PI/2;
+
+    let desired = pointer - (targetIndex + 0.5)*seg;
+    desired += Math.PI*2 * (9 + Math.floor(Math.random()*3));
+    while(desired < angle + Math.PI*2) desired += Math.PI*2;
+
+    const start = angle;
+    const end = desired;
+    const duration = 5200;
+    const t0 = performance.now();
+
+    spinning = true;
+    lastLandedSlice = null;
+
+    let lastTickSeg = null;
+    function easeOutQuart(t){ return 1 - Math.pow(1-t, 4); }
+
+    function frame(now){
+      const t = clamp((now - t0)/duration, 0, 1);
+      const e = easeOutQuart(t);
+      angle = start + (end - start) * e;
+
+      const s = segmentAtPointer(angle);
+      if(s !== lastTickSeg){
+        playTick();
+        lastTickSeg = s;
+      }
+
+      drawWheel();
+
+      if(t < 1){
+        requestAnimationFrame(frame);
+      } else {
+        spinning = false;
+        used[turn].add(targetIndex);
+        lastLandedSlice = targetIndex;
+
+        scoredThisPrompt = false;
+        nextTurnBtn.disabled = true;
+        popupGoodBtn.disabled = false;
+        popupBadBtn.disabled = false;
+
+        setTurnUI();
+        showPopup(prompts[targetIndex]);
+        turnHint.textContent = "Answer the prompt, then score in the popup";
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function spin(){
+    if(spinning) return;
+    if(popup.classList.contains("show") && !scoredThisPrompt) return;
+
+    if(used[0].size >= n && used[1].size >= n){
+      showWinner();
+      return;
+    }
+
+    if(used[turn].size >= n) turn = (turn === 0 ? 1 : 0);
+    if(used[turn].size >= n){
+      showWinner();
+      return;
+    }
+
+    const target = pickUnusedForPlayer(turn);
+    if(target === null){
+      showWinner();
+      return;
+    }
+
+    hidePopup();
+    animateSpin(target);
+  }
+
+  function setScoredState(){
+    scoredThisPrompt = true;
+    nextTurnBtn.disabled = false;
+    popupGoodBtn.disabled = true;
+    popupBadBtn.disabled = true;
+  }
+
+  function scorePoint(good){
+    if(lastLandedSlice === null) return;
+    if(good){
+      scores[turn]++;
+      updateScoreUI();
+      burstConfetti(window.innerWidth/2, window.innerHeight*0.18, 220);
+    }
+    setScoredState();
+  }
+
+  function nextPlayerTurn(){
+    if(!scoredThisPrompt) return;
+
+    lastLandedSlice = null;
+    hidePopup();
+
+    turn = (turn === 0 ? 1 : 0);
+    setTurnUI();
+    turnHint.textContent = "Click the center SPIN";
+
+    if(used[0].size >= n && used[1].size >= n){
+      showWinner();
+    }
+  }
+
+  function canvasPoint(evt){
+    const rect = wheel.getBoundingClientRect();
+    const sx = wheel.width / rect.width;
+    const sy = wheel.height / rect.height;
+    return { x:(evt.clientX-rect.left)*sx, y:(evt.clientY-rect.top)*sy };
+  }
+  function inHub(x,y){
+    const {cx, cy} = center();
+    const dx = x - cx, dy = y - cy;
+    return Math.sqrt(dx*dx + dy*dy) <= hubR();
+  }
+
+  wheel.addEventListener("click", (evt) => {
+    if(soundEnabled) ensureAudio();
+    const p = canvasPoint(evt);
+    if(inHub(p.x, p.y)) spin();
+  });
+
+  popupGoodBtn.addEventListener("click", () => scorePoint(true));
+  popupBadBtn.addEventListener("click", () => scorePoint(false));
+  nextTurnBtn.addEventListener("click", nextPlayerTurn);
+
+  playAgainBtn.addEventListener("click", () => { winner.classList.remove("show"); resetGame(); });
+  resetBtn.addEventListener("click", resetGame);
+
+  function resetGame(){
+    scores = [0,0];
+    used = [new Set(), new Set()];
+    turn = 0;
+    angle = 0;
+    spinning = false;
+    lastLandedSlice = null;
+    scoredThisPrompt = false;
+    hidePopup();
+    winner.classList.remove("show");
+    updateScoreUI();
+    setTurnUI();
+    turnHint.textContent = "Click the center SPIN";
+    drawWheel();
+  }
+
+  function loop(){
+    drawWheel();
+    requestAnimationFrame(loop);
+  }
+
+  updateScoreUI();
+  setTurnUI();
+  drawWheel();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
